@@ -1,0 +1,8 @@
+prefix=/home/qinmanting/Arial_learning/ego-v2+map_generator/src/EGO-Planner-v2/swarm-playground/main_ws/install
+
+Name: path_searching
+Description: Description of path_searching
+Version: 0.0.0
+Cflags: -I${prefix}/include
+Libs: -L${prefix}/lib -lpath_searching
+Requires: plan_env

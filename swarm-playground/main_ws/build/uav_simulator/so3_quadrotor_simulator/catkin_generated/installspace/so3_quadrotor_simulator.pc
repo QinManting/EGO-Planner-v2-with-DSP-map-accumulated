@@ -1,0 +1,8 @@
+prefix=/home/qinmanting/Arial_learning/ego-v2+map_generator/src/EGO-Planner-v2/swarm-playground/main_ws/install
+
+Name: so3_quadrotor_simulator
+Description: Description of so3_quadrotor_simulator
+Version: 0.0.0
+Cflags: -I${prefix}/include
+Libs: -L${prefix}/lib 
+Requires: roscpp quadrotor_msgs uav_utils
