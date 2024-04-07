@@ -9,6 +9,7 @@
 #include <ros/ros.h>
 #include <std_msgs/Empty.h>
 #include <std_msgs/Float64.h>
+#include <std_msgs/Bool.h>
 #include <vector>
 #include <visualization_msgs/Marker.h>
 
@@ -19,7 +20,7 @@
 #include <traj_utils/DataDisp.h>
 #include <plan_manage/planner_manager.h>
 #include <traj_utils/planning_visualization.h>
-#include <traj_utils/PolyTraj.h>
+#include <traj_utils/polynomial.h>
 #include <traj_utils/MINCOTraj.h>
 
 using std::vector;
@@ -62,6 +63,7 @@ namespace ego_planner
     traj_utils::DataDisp data_disp_;
 
     /* parameters */
+    bool sim;
     int target_type_; // 1 mannual select, 2 hard code
     double no_replan_thresh_, replan_thresh_;
     double waypoints_[50][3];
@@ -80,13 +82,15 @@ namespace ego_planner
     Eigen::Vector3d start_pt_, start_vel_, start_acc_;   // start state
     Eigen::Vector3d final_goal_;                             // goal state
     Eigen::Vector3d local_target_pt_, local_target_vel_; // local target state
-    Eigen::Vector3d odom_pos_, odom_vel_, odom_acc_;     // odometry state
     std::vector<Eigen::Vector3d> wps_;
+    Eigen::Vector3d odom_pos_ = Eigen::Vector3d::Zero();  // odometry state
+    Eigen::Vector3d odom_vel_ = Eigen::Vector3d::Zero();
+    Eigen::Vector3d odom_acc_ = Eigen::Vector3d::Zero();
 
     /* ROS utils */
     ros::NodeHandle node_;
     ros::Timer exec_timer_, safety_timer_;
-    ros::Subscriber waypoint_sub_, odom_sub_, trigger_sub_, broadcast_ploytraj_sub_, mandatory_stop_sub_;
+    ros::Subscriber waypoint_sub_, odom_sub_, trigger_sub_, broadcast_ploytraj_sub_, mandatory_stop_sub_, pose_sub_;
     ros::Publisher poly_traj_pub_, data_disp_pub_, broadcast_ploytraj_pub_, heartbeat_pub_, ground_height_pub_;
 
     /* state machine functions */
@@ -113,9 +117,10 @@ namespace ego_planner
     /* input-output */
     void mandatoryStopCallback(const std_msgs::Empty &msg);
     void odometryCallback(const nav_msgs::OdometryConstPtr &msg);
-    void triggerCallback(const geometry_msgs::PoseStampedPtr &msg);
+    void poseCallback(const geometry_msgs::PoseStamped::ConstPtr &msg);
+    void triggerCallback(const std_msgs::Bool &msg);
     void RecvBroadcastMINCOTrajCallback(const traj_utils::MINCOTrajConstPtr &msg);
-    void polyTraj2ROSMsg(traj_utils::PolyTraj &poly_msg, traj_utils::MINCOTraj &MINCO_msg);
+    void polyTraj2ROSMsg(traj_utils::polynomial &poly_msg, traj_utils::MINCOTraj &MINCO_msg);
 
     /* ground height measurement */
     bool measureGroundHeight(double &height);

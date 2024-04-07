@@ -19,10 +19,10 @@ namespace poly_traj
     class Piece
     {
     private:
-        double duration;
-        CoefficientMat coeffMat;
 
     public:
+        double duration;
+        CoefficientMat coeffMat;
         Piece() = default;
 
         Piece(double dur, const CoefficientMat &cMat)
@@ -384,16 +384,14 @@ namespace poly_traj
 
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
     };
-
+    
     class Trajectory
     {
     private:
-        typedef std::vector<Piece> Pieces;
-        Pieces pieces;
-
     public:
         Trajectory() = default;
-
+        typedef std::vector<Piece> Pieces;
+        Pieces pieces;
         Trajectory(const std::vector<double> &durs,
                    const std::vector<CoefficientMat> &cMats)
         {

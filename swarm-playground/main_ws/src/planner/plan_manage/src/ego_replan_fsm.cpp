@@ -14,6 +14,7 @@ namespace ego_planner
     mandatory_stop_ = false;
 
     /*  fsm param  */
+    nh.param("fsm/sim", sim, true);
     nh.param("fsm/flight_type", target_type_, -1);
     nh.param("fsm/thresh_replan_time", replan_thresh_, -1.0);
     nh.param("fsm/planning_horizon", planning_horizen_, -1.0);
@@ -43,7 +44,15 @@ namespace ego_planner
     exec_timer_ = nh.createTimer(ros::Duration(0.01), &EGOReplanFSM::execFSMCallback, this);
     safety_timer_ = nh.createTimer(ros::Duration(0.05), &EGOReplanFSM::checkCollisionCallback, this);
 
-    odom_sub_ = nh.subscribe("odom_world", 1, &EGOReplanFSM::odometryCallback, this);
+    if (sim)
+    {
+      pose_sub_ = nh.subscribe("/mavros/local_position/pose", 1, &EGOReplanFSM::poseCallback, this);
+    }
+    else
+    {
+      odom_sub_ = nh.subscribe("/mavros/local_position/odom", 1, &EGOReplanFSM::odometryCallback, this);
+    }
+    
     mandatory_stop_sub_ = nh.subscribe("mandatory_stop", 1, &EGOReplanFSM::mandatoryStopCallback, this);
 
     /* Use MINCO trajectory to minimize the message size in wireless communication */
@@ -53,10 +62,11 @@ namespace ego_planner
                                                                   this,
                                                                   ros::TransportHints().tcpNoDelay());
 
-    poly_traj_pub_ = nh.advertise<traj_utils::PolyTraj>("planning/trajectory", 10);
+    poly_traj_pub_ = nh.advertise<traj_utils::polynomial>("/reference/polynomial", 1);
     data_disp_pub_ = nh.advertise<traj_utils::DataDisp>("planning/data_display", 100);
     heartbeat_pub_ = nh.advertise<std_msgs::Empty>("planning/heartbeat", 10);
     ground_height_pub_ = nh.advertise<std_msgs::Float64>("/ground_height_measurement", 10);
+    // polynomial_pub = nh.advertise<quadrotor_msgs::polynomial>("/reference/polynomial", 1);
 
     if (target_type_ == TARGET_TYPE::MANUAL_TARGET)
     {
@@ -408,7 +418,7 @@ namespace ego_planner
 
     planner_manager_->EmergencyStop(stop_pos);
 
-    traj_utils::PolyTraj poly_msg;
+    traj_utils::polynomial poly_msg;
     traj_utils::MINCOTraj MINCO_msg;
     polyTraj2ROSMsg(poly_msg, MINCO_msg);
     poly_traj_pub_.publish(poly_msg);
@@ -436,7 +446,7 @@ namespace ego_planner
     if (plan_success)
     {
 
-      traj_utils::PolyTraj poly_msg;
+      traj_utils::polynomial poly_msg;
       traj_utils::MINCOTraj MINCO_msg;
       polyTraj2ROSMsg(poly_msg, MINCO_msg);
       poly_traj_pub_.publish(poly_msg);
@@ -642,7 +652,15 @@ namespace ego_planner
     have_odom_ = true;
   }
 
-  void EGOReplanFSM::triggerCallback(const geometry_msgs::PoseStampedPtr &msg)
+  void EGOReplanFSM::poseCallback(const geometry_msgs::PoseStamped::ConstPtr &msg)
+  {
+    odom_pos_(0) = msg->pose.position.x;
+    odom_pos_(1) = msg->pose.position.y;
+    odom_pos_(2) = msg->pose.position.z;
+    have_odom_ = true;
+  }
+
+  void EGOReplanFSM::triggerCallback(const std_msgs::Bool &msg)
   {
     have_trigger_ = true;
     cout << "Triggered!" << endl;
@@ -783,32 +801,34 @@ namespace ego_planner
     }
   }
 
-  void EGOReplanFSM::polyTraj2ROSMsg(traj_utils::PolyTraj &poly_msg, traj_utils::MINCOTraj &MINCO_msg)
+  void EGOReplanFSM::polyTraj2ROSMsg(traj_utils::polynomial &poly_msg, traj_utils::MINCOTraj &MINCO_msg)
   {
 
     auto data = &planner_manager_->traj_.local_traj;
     Eigen::VectorXd durs = data->traj.getDurations();
-    int piece_num = data->traj.getPieceNum();
+    poly_msg.pieceNum = data->traj.getPieceNum();
+    poly_msg.totalDuration = data->traj.getTotalDuration();
+    poly_msg.captured = false;
 
-    poly_msg.drone_id = planner_manager_->pp_.drone_id;
-    poly_msg.traj_id = data->traj_id;
+    // poly_msg.drone_id = planner_manager_->pp_.drone_id;
+    // poly_msg.traj_id = data->traj_id;
     poly_msg.start_time = ros::Time(data->start_time);
-    poly_msg.order = 5; // todo, only support order = 5 now.
-    poly_msg.duration.resize(piece_num);
-    poly_msg.coef_x.resize(6 * piece_num);
-    poly_msg.coef_y.resize(6 * piece_num);
-    poly_msg.coef_z.resize(6 * piece_num);
-    for (int i = 0; i < piece_num; ++i)
+    // poly_msg.order = 5; // todo, only support order = 5 now.
+    poly_msg.Duration.resize(poly_msg.pieceNum);
+    poly_msg.Xcoeff.resize(6 * poly_msg.pieceNum);
+    poly_msg.Ycoeff.resize(6 * poly_msg.pieceNum);
+    poly_msg.Zcoeff.resize(6 * poly_msg.pieceNum);
+    for (int i = 0; i < poly_msg.pieceNum; ++i)
     {
-      poly_msg.duration[i] = durs(i);
+      poly_msg.Duration[i] = durs(i);
 
       poly_traj::CoefficientMat cMat = data->traj.getPiece(i).getCoeffMat();
       int i6 = i * 6;
       for (int j = 0; j < 6; j++)
       {
-        poly_msg.coef_x[i6 + j] = cMat(0, j);
-        poly_msg.coef_y[i6 + j] = cMat(1, j);
-        poly_msg.coef_z[i6 + j] = cMat(2, j);
+        poly_msg.Xcoeff[i6 + j] = cMat(0, j);
+        poly_msg.Ycoeff[i6 + j] = cMat(1, j);
+        poly_msg.Zcoeff[i6 + j] = cMat(2, j);
       }
     }
 
@@ -816,7 +836,7 @@ namespace ego_planner
     MINCO_msg.traj_id = data->traj_id;
     MINCO_msg.start_time = ros::Time(data->start_time);
     MINCO_msg.order = 5; // todo, only support order = 5 now.
-    MINCO_msg.duration.resize(piece_num);
+    MINCO_msg.duration.resize(poly_msg.pieceNum);
     MINCO_msg.des_clearance = planner_manager_->getSwarmClearance();
     Eigen::Vector3d vec;
     vec = data->traj.getPos(0);
@@ -831,17 +851,17 @@ namespace ego_planner
     MINCO_msg.end_v[0] = vec(0), MINCO_msg.end_v[1] = vec(1), MINCO_msg.end_v[2] = vec(2);
     vec = data->traj.getAcc(data->duration);
     MINCO_msg.end_a[0] = vec(0), MINCO_msg.end_a[1] = vec(1), MINCO_msg.end_a[2] = vec(2);
-    MINCO_msg.inner_x.resize(piece_num - 1);
-    MINCO_msg.inner_y.resize(piece_num - 1);
-    MINCO_msg.inner_z.resize(piece_num - 1);
+    MINCO_msg.inner_x.resize(poly_msg.pieceNum - 1);
+    MINCO_msg.inner_y.resize(poly_msg.pieceNum - 1);
+    MINCO_msg.inner_z.resize(poly_msg.pieceNum - 1);
     Eigen::MatrixXd pos = data->traj.getPositions();
-    for (int i = 0; i < piece_num - 1; i++)
+    for (int i = 0; i < poly_msg.pieceNum - 1; i++)
     {
       MINCO_msg.inner_x[i] = pos(0, i + 1);
       MINCO_msg.inner_y[i] = pos(1, i + 1);
       MINCO_msg.inner_z[i] = pos(2, i + 1);
     }
-    for (int i = 0; i < piece_num; i++)
+    for (int i = 0; i < poly_msg.pieceNum; i++)
       MINCO_msg.duration[i] = durs[i];
   }
 

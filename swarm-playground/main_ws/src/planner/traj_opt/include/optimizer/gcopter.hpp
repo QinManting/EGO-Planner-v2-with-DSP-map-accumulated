@@ -19,10 +19,10 @@ typedef Eigen::Matrix<double, 3, 2> AccCoefficientMat;
 class Piece
 {
 private:
-    double duration;
-    CoefficientMat coeffMat;
 
 public:
+    double duration;
+    CoefficientMat coeffMat;
     Piece() = default;
 
     Piece(double dur, const CoefficientMat &cMat)
@@ -160,10 +160,10 @@ public:
 class Trajectory
 {
 private:
-    typedef std::vector<Piece> Pieces;
-    Pieces pieces;
 
 public:
+    typedef std::vector<Piece> Pieces;
+    Pieces pieces;
     Trajectory() = default;
 
     Trajectory(const std::vector<double> &durs,
