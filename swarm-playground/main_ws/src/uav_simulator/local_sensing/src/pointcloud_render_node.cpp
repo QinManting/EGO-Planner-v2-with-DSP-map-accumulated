@@ -6,6 +6,16 @@
 #include <pcl/point_types.h>
 #include <pcl/search/kdtree.h>
 #include <pcl_conversions/pcl_conversions.h>
+// #include <pcl_ros/transforms.h>
+
+// #include "tf/tf.h"
+// #include "tf/transform_datatypes.h"
+// #include <tf/transform_broadcaster.h>
+// #include <tf2_ros/transform_listener.h>
+// #include <tf2_sensor_msgs/tf2_sensor_msgs.h>
+// #include <pcl_ros/point_cloud.h>
+// #include <pcl_ros/transforms.h>
+
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <Eigen/Dense>
@@ -13,6 +23,8 @@
 #include <iostream>
 #include <pcl/search/impl/kdtree.hpp>
 #include <vector>
+
+// #include <boost/bind.hpp>
 
 using namespace std;
 using namespace Eigen;
@@ -32,6 +44,7 @@ bool has_local_map(false);
 bool has_odom(false);
 
 nav_msgs::Odometry _odom;
+// geometry_msgs::TransformStamped transformStamped;
 
 double sensing_horizon, sensing_rate, estimation_rate;
 double _x_size, _y_size, _z_size;
@@ -79,9 +92,30 @@ vector<float> _pointRadiusSquaredDistance;
 
 void rcvGlobalPointCloudCallBack(
     const sensor_msgs::PointCloud2& pointcloud_map) {
-  // if (has_global_map) return;
+  if (has_global_map)
+    return;
+  // std::string source_frame = "body";   // Replace with your source frame
+  // std::string target_frame = "world";  // Replace with your target frame
 
-  // ROS_WARN("Global Pointcloud received..");
+  // geometry_msgs::TransformStamped transformStamped;
+
+  // try {
+  //   // Get the transform from the source frame to the target frame
+  //   transformStamped = tf_buffer.lookupTransform(
+  //       target_frame, source_frame,
+  //       ros::Time(0));  // Use latest available transform
+  // } catch (tf2::TransformException& ex) {
+  //   ROS_WARN("Failed to obtain transform from %s to %s: %s",
+  //            source_frame.c_str(), target_frame.c_str(), ex.what());
+  //   return;
+  // }
+  // // Perform the point cloud transformation
+  // sensor_msgs::PointCloud2 transformed_cloud;
+  // pcl_ros::transformPointCloud(target_frame, *pointcloud_map, transformed_cloud,
+  //                              tf_buffer);
+  // tf2::doTransform(pointcloud_map, transformed_cloud, transformStamped);
+
+  ROS_WARN("Global Pointcloud received..");
 
   pcl::PointCloud<pcl::PointXYZ> cloud_input;
   pcl::fromROSMsg(pointcloud_map, cloud_input);
@@ -96,7 +130,8 @@ void rcvGlobalPointCloudCallBack(
 }
 
 void renderSensedPoints(const ros::TimerEvent& event) {
-  if (!has_global_map || !has_odom) return;
+  if (!has_global_map || !has_odom)
+    return;
 
   Eigen::Quaterniond q;
   q.x() = _odom.pose.pose.orientation.x;
@@ -127,13 +162,14 @@ void renderSensedPoints(const ros::TimerEvent& event) {
       //   continue;
       if ((fabs(pt.z - _odom.pose.pose.position.z) / sensing_horizon) >
           tan(M_PI / 6.0))
-        continue; 
+        continue;
 
       Vector3d pt_vec(pt.x - _odom.pose.pose.position.x,
                       pt.y - _odom.pose.pose.position.y,
                       pt.z - _odom.pose.pose.position.z);
 
-      if (pt_vec.normalized().dot(yaw_vec) < 0) continue; 
+      if (pt_vec.normalized().dot(yaw_vec) < 0)
+        continue;
 
       _local_map.points.push_back(pt);
     }
@@ -161,6 +197,9 @@ int main(int argc, char** argv) {
   ros::init(argc, argv, "pcl_render");
   ros::NodeHandle nh("~");
 
+  // tf2_ros::Buffer tf_buffer;
+  // tf2_ros::TransformListener tf_listener(tf_buffer);
+
   nh.getParam("sensing_horizon", sensing_horizon);
   nh.getParam("sensing_rate", sensing_rate);
   nh.getParam("estimation_rate", estimation_rate);
@@ -171,7 +210,7 @@ int main(int argc, char** argv) {
 
   // subscribe point cloud
   global_map_sub = nh.subscribe("global_map", 3, rcvGlobalPointCloudCallBack);
-  // global_map_sub = nh.subscribe("global_map", 1, rcvGlobalPointCloudCallBack);
+  // global_map_sub = nh.subscribe<sensor_msgs::PointCloud2>("global_map", 3, boost::bind(rcvGlobalPointCloudCallBack, _1, boost::ref(tf_buffer)));
   local_map_sub = nh.subscribe("local_map", 1, rcvLocalPointCloudCallBack);
   odom_sub = nh.subscribe("odometry", 50, rcvOdometryCallbck);
 

@@ -75,6 +75,7 @@ add_message_files(
   PolynomialTrajectory.msg
   LQRTrajectory.msg
   GoalSet.msg
+  polynomial.msg
 )
 
 generate_messages(

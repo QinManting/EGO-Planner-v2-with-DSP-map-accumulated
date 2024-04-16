@@ -40,17 +40,19 @@
         <param name="gains/rot/z" value="1.0"/>    
         <param name="gains/ang/z" value="0.1"/>        
   </node> -->
-
-    <node pkg="poscmd_2_odom" name="drone_$(arg drone_id)_poscmd_2_odom" type="poscmd_2_odom" output="screen">
+    <!-- syz添加 用于直接把位置指令转发为odom（即默认飞机100%跟踪 -->
+    <!-- <node pkg="poscmd_2_odom" name="drone_$(arg drone_id)_poscmd_2_odom" type="poscmd_2_odom" output="screen">
         <param name="init_x" value="$(arg init_x_)"/>
         <param name="init_y" value="$(arg init_y_)"/>
         <param name="init_z" value="$(arg init_z_)"/>
-        <!-- <remap from="~command" to="drone_$(arg drone_id)_planning/pos_cmd"/> -->
+        <remap from="~command" to="drone_$(arg drone_id)_planning/pos_cmd"/>
         <remap from="~odometry" to="drone_$(arg drone_id)_$(arg odometry_topic)"/>
-    </node>
+        <remap from="~odometry" to="/mavros/local_position/odom"/>
+    </node> -->
 
     <node pkg="odom_visualization" name="drone_$(arg drone_id)_odom_visualization" type="odom_visualization" output="screen">
-        <remap from="~odom" to="drone_$(arg drone_id)_visual_slam/odom"/>
+        <!-- <remap from="~odom" to="drone_$(arg drone_id)_visual_slam/odom"/> -->
+        <remap from="~odom" to="/mavros/local_position/odom"/>
         <param name="color/a" value="1.0"/>
         <param name="color/r" value="0.0"/>
         <param name="color/g" value="0.0"/>
@@ -69,7 +71,8 @@
         <param name="map/y_size" value="$(arg map_size_y_)"/>
         <param name="map/z_size" value="$(arg map_size_z_)"/>
         <remap from="~global_map" to="/map_generator/global_cloud"/>
-        <remap from="~odometry" to="/drone_$(arg drone_id)_$(arg odometry_topic)"/>
+        <!-- <remap from="~odometry" to="/drone_$(arg drone_id)_$(arg odometry_topic)"/> -->
+        <remap from="~odometry" to="/mavros/local_position/odom"/>
         <remap from="~pcl_render_node/cloud" to="/drone_$(arg drone_id)_pcl_render_node/cloud"/>
     </node>
 </launch>

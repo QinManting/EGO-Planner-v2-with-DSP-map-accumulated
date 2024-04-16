@@ -1,5 +1,5 @@
 #include <nav_msgs/Odometry.h>
-#include <traj_utils/PolyTraj.h>
+#include <traj_utils/polynomial.h>
 #include <optimizer/poly_traj_utils.hpp>
 #include <quadrotor_msgs/PositionCommand.h>
 #include <std_msgs/Empty.h>
@@ -34,33 +34,33 @@ void heartbeatCallback(std_msgs::EmptyPtr msg)
   heartbeat_time_ = ros::Time::now();
 }
 
-void polyTrajCallback(traj_utils::PolyTrajPtr msg)
+void polyTrajCallback(traj_utils::polynomialPtr msg)
 {
   if (msg->order != 5)
   {
     ROS_ERROR("[traj_server] Only support trajectory order equals 5 now!");
     return;
   }
-  if (msg->duration.size() * (msg->order + 1) != msg->coef_x.size())
+  if (msg->Duration.size() * (msg->order + 1) != msg->Xcoeff.size())
   {
     ROS_ERROR("[traj_server] WRONG trajectory parameters, ");
     return;
   }
 
-  int piece_nums = msg->duration.size();
+  int piece_nums = msg->Duration.size();
   std::vector<double> dura(piece_nums);
   std::vector<poly_traj::CoefficientMat> cMats(piece_nums);
   for (int i = 0; i < piece_nums; ++i)
   {
     int i6 = i * 6;
-    cMats[i].row(0) << msg->coef_x[i6 + 0], msg->coef_x[i6 + 1], msg->coef_x[i6 + 2],
-        msg->coef_x[i6 + 3], msg->coef_x[i6 + 4], msg->coef_x[i6 + 5];
-    cMats[i].row(1) << msg->coef_y[i6 + 0], msg->coef_y[i6 + 1], msg->coef_y[i6 + 2],
-        msg->coef_y[i6 + 3], msg->coef_y[i6 + 4], msg->coef_y[i6 + 5];
-    cMats[i].row(2) << msg->coef_z[i6 + 0], msg->coef_z[i6 + 1], msg->coef_z[i6 + 2],
-        msg->coef_z[i6 + 3], msg->coef_z[i6 + 4], msg->coef_z[i6 + 5];
+    cMats[i].row(0) << msg->Xcoeff[i6 + 0], msg->Xcoeff[i6 + 1], msg->Xcoeff[i6 + 2],
+        msg->Xcoeff[i6 + 3], msg->Xcoeff[i6 + 4], msg->Xcoeff[i6 + 5];
+    cMats[i].row(1) << msg->Ycoeff[i6 + 0], msg->Ycoeff[i6 + 1], msg->Ycoeff[i6 + 2],
+        msg->Ycoeff[i6 + 3], msg->Ycoeff[i6 + 4], msg->Ycoeff[i6 + 5];
+    cMats[i].row(2) << msg->Zcoeff[i6 + 0], msg->Zcoeff[i6 + 1], msg->Zcoeff[i6 + 2],
+        msg->Zcoeff[i6 + 3], msg->Zcoeff[i6 + 4], msg->Zcoeff[i6 + 5];
 
-    dura[i] = msg->duration[i];
+    dura[i] = msg->Duration[i];
   }
 
   traj_.reset(new poly_traj::Trajectory(dura, cMats));
