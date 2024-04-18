@@ -37,8 +37,8 @@
     <!-- <node pkg="ego_planner" name="ego_planner_node" type="ego_planner_node" output="screen" launch-prefix="valgrind"> -->
     <node pkg="ego_planner" name="drone_$(arg drone_id)_ego_planner_node" type="ego_planner_node" output="screen">
         <!-- 规划接收的odom信息 -->
-        <!-- <remap from="~odom_world" to="/drone_$(arg drone_id)_$(arg odometry_topic)"/> -->
-        <remap from="~odom_world" to="/mavros/local_position/odom"/>
+        <remap from="~odom_world" to="$(arg odometry_topic)"/>
+        <!-- <remap from="~odom_world" to="/mavros/local_position/odom"/> -->
         <remap from="~mandatory_stop" to="/mandatory_stop_to_planner"/>
         <!-- 规划发送的轨迹 -->
         <remap from="~planning/trajectory" to = "/reference/polynomial"/>
@@ -48,12 +48,12 @@
         <remap from="~planning/broadcast_traj_recv" to = "/broadcast_traj_to_planner"/>
         <remap from="~planning/heartbeat" to = "/drone_$(arg drone_id)_traj_server/heartbeat"/>
         <remap from="/goal" to = "/goal_with_id"/>
-        <!-- <remap from="~grid_map/odom" to="/drone_$(arg drone_id)_$(arg odometry_topic)"/> -->
         <!-- 地图接收的odom信息 -->
-        <remap from="~grid_map/odom" to="/mavros/local_position/odom"/>
-        <remap from="~grid_map/cloud" to="/drone_$(arg drone_id)_$(arg cloud_topic)"/>
-        <remap from="~grid_map/pose"   to = "/drone_$(arg drone_id)_$(arg camera_pose_topic)"/>
-        <remap from="~grid_map/depth" to = "/drone_$(arg drone_id)_$(arg depth_topic)"/>
+        <remap from="~grid_map/odom" to="$(arg odometry_topic)"/>
+        <!-- <remap from="~grid_map/odom" to="/mavros/local_position/odom"/> -->
+        <remap from="~grid_map/cloud" to="$(arg cloud_topic)"/>
+        <remap from="~grid_map/pose"   to = "$(arg camera_pose_topic)"/>
+        <remap from="~grid_map/depth" to = "$(arg depth_topic)"/>
         <!-- planning fsm -->
         <param name="fsm/flight_type" value="$(arg flight_type)" type="int"/>
         <param name="fsm/thresh_replan_time" value="1.0" type="double"/>
@@ -78,6 +78,7 @@
         <param name="fsm/waypoint4_x" value="$(arg point4_x)" type="double"/>
         <param name="fsm/waypoint4_y" value="$(arg point4_y)" type="double"/>
         <param name="fsm/waypoint4_z" value="$(arg point4_z)" type="double"/>
+        <!-- dsp map在rviz中的显示分辨率 -->
         <param name="grid_map/resolution" value="0.1" />
         <param name="grid_map/map_size_x" value="$(arg map_size_x_)" />
         <param name="grid_map/map_size_y" value="$(arg map_size_y_)" />
@@ -85,7 +86,8 @@
         <param name="grid_map/local_update_range_x" value="5.5" />
         <param name="grid_map/local_update_range_y" value="5.5" />
         <param name="grid_map/local_update_range_z" value="2.0" /> <!-- different meaning between grid_map.cpp and grid_map_bigmap.cpp -->
-        <param name="grid_map/obstacles_inflation" value="0.1" />
+        <!-- inflate occupied voxels to compensate robot size -->
+        <param name="grid_map/obstacles_inflation" value="0.3" />
         <param name="grid_map/local_map_margin" value="10"/>
         <param name="grid_map/enable_virtual_wall" value="true"/>
         <param name="grid_map/virtual_ceil" value="3.0"/>
@@ -115,7 +117,9 @@
         <param name="grid_map/max_ray_length" value="4.5"/>
         <param name="grid_map/visualization_truncate_height" value="1.9"/>
         <param name="grid_map/show_occ_time" value="false"/>
-        <param name="grid_map/pose_type" value="1"/>
+        <!-- pose_type = 1 使用pose -->
+        <!-- pose_type = 2 使用odom -->
+        <param name="grid_map/pose_type" value="2"/>
         <param name="grid_map/frame_id" value="world"/>
         <!-- planner manager -->
         <param name="manager/max_vel" value="$(arg max_vel)" type="double"/>

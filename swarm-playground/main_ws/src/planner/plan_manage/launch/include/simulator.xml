@@ -40,7 +40,7 @@
         <param name="gains/rot/z" value="1.0"/>    
         <param name="gains/ang/z" value="0.1"/>        
   </node> -->
-    <!-- syz添加 用于直接把位置指令转发为odom（即默认飞机100%跟踪 -->
+    <!-- 用于直接把位置指令转发为odom（即默认飞机100%跟踪 -->
     <!-- <node pkg="poscmd_2_odom" name="drone_$(arg drone_id)_poscmd_2_odom" type="poscmd_2_odom" output="screen">
         <param name="init_x" value="$(arg init_x_)"/>
         <param name="init_y" value="$(arg init_y_)"/>

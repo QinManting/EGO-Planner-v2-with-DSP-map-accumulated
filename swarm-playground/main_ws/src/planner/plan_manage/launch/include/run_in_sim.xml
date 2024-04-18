@@ -36,21 +36,22 @@
         <!-- camera pose: transform of camera frame in the world frame -->
         <!-- depth topic: depth image, 640x480 by default -->
         <!-- don't set cloud_topic if you already set these ones! -->
-        <arg name="camera_pose_topic" value="pcl_render_node/camera_pose"/>
-        <arg name="depth_topic" value="pcl_render_node/depth"/>
+        <arg name="camera_pose_topic" value="null"/>
+        <arg name="depth_topic" value="null"/>
+        <!-- <arg name="depth_topic" value="/iris_D435i/realsense/depth_camera/depth/image_raw"/> -->
         <!-- topic of point cloud measurement, such as from LIDAR  -->
         <!-- don't set camera pose and depth, if you already set this one! -->
-        <arg name="cloud_topic" value="pcl_render_node/cloud"/>
+        <arg name="cloud_topic" value="/map_generator/global_cloud"/>
         <!-- intrinsic params of the depth camera -->
-        <arg name="cx" value="321.04638671875"/>
-        <arg name="cy" value="243.44969177246094"/>
-        <arg name="fx" value="387.229248046875"/>
-        <arg name="fy" value="387.229248046875"/>
+        <arg name="cx" value="320.5"/>
+        <arg name="cy" value="240.5"/>
+        <arg name="fx" value="554.254691191187"/>
+        <arg name="fy" value="554.254691191187"/>
         <!-- maximum velocity, acceleration and jerk the drone will reach -->
         <!-- 待修改 根据MPC的速度约束，否则会导致跟踪不上点 -->
-        <arg name="max_vel" value="1.0" />
-        <arg name="max_acc" value="2.0" />
-        <arg name="max_jer" value="2.0" />
+        <arg name="max_vel" value="0.6" /><!-- max_vel已经确定 -->
+        <arg name="max_acc" value="3.0" />
+        <arg name="max_jer" value="5.0" />
         <!--always set to 1.5 times grater than sensing horizen-->
         <arg name="planning_horizon" value="7.5" />
         <arg name="use_multitopology_trajs" value="false" />
@@ -84,19 +85,21 @@
         <param name="traj_server/time_forward" value="1.0" type="double"/>
     </node>
     <!-- use simulator -->
-    <include file="$(find ego_planner)/launch/include/simulator.xml">
-        <arg name="drone_id" value="$(arg drone_id)"/>
-        <arg name="map_size_x_" value="$(arg map_size_x)"/>
-        <arg name="map_size_y_" value="$(arg map_size_y)"/>
-        <arg name="map_size_z_" value="$(arg map_size_z)"/>
-        <arg name="init_x_" value="$(arg init_x)"/>
-        <arg name="init_y_" value="$(arg init_y)"/>
-        <arg name="init_z_" value="$(arg init_z)"/>
-        <arg name="odometry_topic" value="$(arg odom_topic)" />
-    </include>
-    <include file="$(find manual_take_over)/launch/take_over_drone.launch">
+    <node pkg="odom_visualization" name="drone_$(arg drone_id)_odom_visualization" type="odom_visualization" output="screen">
+        <!-- <remap from="~odom" to="drone_$(arg drone_id)_visual_slam/odom"/> -->
+        <remap from="~odom" to="/mavros/local_position/odom"/>
+        <param name="color/a" value="1.0"/>
+        <param name="color/r" value="0.0"/>
+        <param name="color/g" value="0.0"/>
+        <param name="color/b" value="0.0"/>
+        <param name="covariance_scale" value="100.0"/>
+        <param name="robot_scale" value="0.35"/>
+        <param name="tf45" value="false"/>
+        <param name="drone_id" value="$(arg drone_id)"/>
+    </node>
+    <!-- <include file="$(find manual_take_over)/launch/take_over_drone.launch">
         <arg name="drone_id" value="$(arg drone_id)"/>
         <arg name="cmd_topic" value="drone_$(arg drone_id)_planning/pos_cmd"/>
-    </include>
+    </include> -->
 </launch>
     
