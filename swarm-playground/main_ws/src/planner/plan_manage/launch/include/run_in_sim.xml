@@ -97,9 +97,5 @@
         <param name="tf45" value="false"/>
         <param name="drone_id" value="$(arg drone_id)"/>
     </node>
-    <!-- <include file="$(find manual_take_over)/launch/take_over_drone.launch">
-        <arg name="drone_id" value="$(arg drone_id)"/>
-        <arg name="cmd_topic" value="drone_$(arg drone_id)_planning/pos_cmd"/>
-    </include> -->
 </launch>
     
