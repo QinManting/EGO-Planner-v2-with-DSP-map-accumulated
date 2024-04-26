@@ -1,8 +1,0 @@
-prefix=/home/qinmanting/Arial_learning/ego-v2+map_generator/src/EGO-Planner-v2-with-DSP-map-accumulated/swarm-playground/main_ws/install
-
-Name: quadrotor_msgs
-Description: Description of quadrotor_msgs
-Version: 0.0.0
-Cflags: -I${prefix}/include
-Libs: -L${prefix}/lib -lencode_msgs -ldecode_msgs
-Requires: message_runtime

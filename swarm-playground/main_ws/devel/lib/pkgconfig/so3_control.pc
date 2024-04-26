@@ -1,8 +1,0 @@
-prefix=/home/qinmanting/Arial_learning/ego-v2+map_generator/src/EGO-Planner-v2-with-DSP-map-accumulated/swarm-playground/main_ws/devel
-
-Name: so3_control
-Description: Description of so3_control
-Version: 0.0.0
-Cflags: 
-Libs: -L${prefix}/lib 
-Requires: 

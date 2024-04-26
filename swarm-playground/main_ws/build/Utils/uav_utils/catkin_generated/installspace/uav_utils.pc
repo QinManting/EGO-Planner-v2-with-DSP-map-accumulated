@@ -1,8 +1,0 @@
-prefix=/home/qinmanting/Arial_learning/ego-v2+map_generator/src/EGO-Planner-v2-with-DSP-map-accumulated/swarm-playground/main_ws/install
-
-Name: uav_utils
-Description: Description of uav_utils
-Version: 0.0.0
-Cflags: -I${prefix}/include
-Libs: -L${prefix}/lib 
-Requires: roscpp rospy
